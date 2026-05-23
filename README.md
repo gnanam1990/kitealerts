@@ -17,6 +17,13 @@ pnpm --filter api dev   # http://localhost:8788
 pnpm --filter web dev   # http://localhost:3000
 ```
 
+## Deployment
+
+- **Production:** https://kitealerts.vercel.app
+- **Host:** Vercel project `kitealerts`
+- **Status:** Web dashboard build verified on 2026-05-23. Rule storage, KiteScan polling, and webhook delivery require the Hono API on a persistent backend.
+- **API config:** deploy `packages/api` to Railway or another server host, then set `VITE_API` in the Vercel web project to the API base URL.
+
 ## Rule model
 
 A rule says: *"watch this address, in this direction, optionally above this value — when something matches, POST to this webhook."*

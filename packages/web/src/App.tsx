@@ -60,7 +60,17 @@ export default function App() {
             {loading ? (
               <p className="text-sm font-mono text-kite-fg/55">Loading…</p>
             ) : error ? (
-              <p className="text-sm font-mono text-kite-destructive">{error}</p>
+              <div className="rounded-xl border border-kite-border bg-kite-card p-5">
+                <p className="text-sm font-semibold text-kite-fg">Alerts API not connected</p>
+                <p className="mt-2 text-sm text-kite-fg/65 leading-relaxed">
+                  The dashboard is deployed, but rule storage, KiteScan polling, and webhook
+                  delivery need the Hono API running on a persistent backend.
+                </p>
+                <p className="mt-3 text-xs font-mono text-kite-fg/55">
+                  Next step: deploy packages/api to Railway or another server host, then set
+                  VITE_API to that URL.
+                </p>
+              </div>
             ) : (
               <RuleList rules={rules} onChanged={refresh} />
             )}

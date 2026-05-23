@@ -1,4 +1,5 @@
 const BASE = (import.meta.env.VITE_API ?? "/api") as string;
+const API_UNAVAILABLE = "KiteAlerts API is not configured for this Vercel preview yet.";
 
 export type MatchType = "address_receives" | "address_sends" | "contract_called";
 
@@ -24,9 +25,16 @@ export interface Delivery {
   delivered_at: number;
 }
 
+async function readJson<T>(response: Response): Promise<T> {
+  if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) {
+    throw new Error(API_UNAVAILABLE);
+  }
+  return (await response.json()) as T;
+}
+
 export async function listRules(): Promise<Rule[]> {
   const r = await fetch(`${BASE}/rules`);
-  const data = (await r.json()) as { rules: Rule[] };
+  const data = await readJson<{ rules: Rule[] }>(r);
   return data.rules ?? [];
 }
 
@@ -37,7 +45,7 @@ export async function createRule(rule: Omit<Rule, "id" | "active" | "created_at"
     body: JSON.stringify(rule),
   });
   if (!r.ok) return null;
-  const data = (await r.json()) as { rule: Rule };
+  const data = await readJson<{ rule: Rule }>(r);
   return data.rule;
 }
 
@@ -51,6 +59,6 @@ export async function toggleRule(id: string) {
 
 export async function listDeliveries(id: string): Promise<Delivery[]> {
   const r = await fetch(`${BASE}/rules/${id}/deliveries`);
-  const data = (await r.json()) as { deliveries: Delivery[] };
+  const data = await readJson<{ deliveries: Delivery[] }>(r);
   return data.deliveries ?? [];
 }

@@ -26,23 +26,28 @@ export function RuleForm({ onCreated }: { onCreated: () => void }) {
     if (!valid) return;
     setBusy(true);
     setErr(null);
-    const r = await createRule({
-      name: name.trim(),
-      match_type: matchType,
-      address: address.trim(),
-      min_value_wei: minValueWei.trim() || null,
-      webhook_url: webhook.trim(),
-    });
-    setBusy(false);
-    if (!r) {
-      setErr("Could not create rule");
-      return;
+    try {
+      const r = await createRule({
+        name: name.trim(),
+        match_type: matchType,
+        address: address.trim(),
+        min_value_wei: minValueWei.trim() || null,
+        webhook_url: webhook.trim(),
+      });
+      if (!r) {
+        setErr("Could not create rule");
+        return;
+      }
+      setName("");
+      setAddress("");
+      setMinValueWei("");
+      setWebhook("");
+      onCreated();
+    } catch {
+      setErr("KiteAlerts API is not configured for this Vercel preview yet.");
+    } finally {
+      setBusy(false);
     }
-    setName("");
-    setAddress("");
-    setMinValueWei("");
-    setWebhook("");
-    onCreated();
   }
 
   return (
