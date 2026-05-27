@@ -1,5 +1,11 @@
-const BASE = (import.meta.env.VITE_API ?? "/api") as string;
 const API_UNAVAILABLE = "KiteAlerts API is not configured for this Vercel preview yet.";
+const CONFIGURED_BASE = (import.meta.env.VITE_API as string | undefined)?.trim();
+const BASE = CONFIGURED_BASE ? CONFIGURED_BASE.replace(/\/$/, "") : null;
+
+function apiUrl(path: string): string {
+  if (!BASE) throw new Error(API_UNAVAILABLE);
+  return `${BASE}${path}`;
+}
 
 export type MatchType = "address_receives" | "address_sends" | "contract_called";
 
@@ -33,13 +39,13 @@ async function readJson<T>(response: Response): Promise<T> {
 }
 
 export async function listRules(): Promise<Rule[]> {
-  const r = await fetch(`${BASE}/rules`);
+  const r = await fetch(apiUrl("/rules"));
   const data = await readJson<{ rules: Rule[] }>(r);
   return data.rules ?? [];
 }
 
 export async function createRule(rule: Omit<Rule, "id" | "active" | "created_at" | "last_seen_block">): Promise<Rule | null> {
-  const r = await fetch(`${BASE}/rules`, {
+  const r = await fetch(apiUrl("/rules"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(rule),
@@ -50,15 +56,15 @@ export async function createRule(rule: Omit<Rule, "id" | "active" | "created_at"
 }
 
 export async function deleteRule(id: string) {
-  await fetch(`${BASE}/rules/${id}`, { method: "DELETE" });
+  await fetch(apiUrl(`/rules/${id}`), { method: "DELETE" });
 }
 
 export async function toggleRule(id: string) {
-  await fetch(`${BASE}/rules/${id}/toggle`, { method: "POST" });
+  await fetch(apiUrl(`/rules/${id}/toggle`), { method: "POST" });
 }
 
 export async function listDeliveries(id: string): Promise<Delivery[]> {
-  const r = await fetch(`${BASE}/rules/${id}/deliveries`);
+  const r = await fetch(apiUrl(`/rules/${id}/deliveries`));
   const data = await readJson<{ deliveries: Delivery[] }>(r);
   return data.deliveries ?? [];
 }
