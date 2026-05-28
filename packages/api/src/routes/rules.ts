@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { db } from "../lib/db";
 import type { Rule, MatchType } from "../lib/types";
+import { requireWriteAuth } from "../lib/auth";
+import { validateWebhookUrl } from "../lib/webhook-url";
 import crypto from "node:crypto";
 
 const ALLOWED: MatchType[] = ["address_receives", "address_sends", "contract_called"];
@@ -12,7 +14,7 @@ rules.get("/", (c) => {
   return c.json({ rules: list });
 });
 
-rules.post("/", async (c) => {
+rules.post("/", requireWriteAuth, async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: "invalid body" }, 400);
 
@@ -26,28 +28,32 @@ rules.post("/", async (c) => {
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
     return c.json({ error: "invalid address" }, 400);
   }
-  if (!/^https?:\/\//.test(webhook_url)) {
-    return c.json({ error: "webhook_url must be http(s)" }, 400);
+  if (min_value_wei && !/^\d+$/.test(min_value_wei)) {
+    return c.json({ error: "min_value_wei must be an integer string" }, 400);
+  }
+  const webhook = await validateWebhookUrl(webhook_url);
+  if (!webhook.ok) {
+    return c.json({ error: webhook.reason }, 400);
   }
 
   const id = crypto.randomUUID();
   db.prepare(
     `INSERT INTO rules (id, name, match_type, address, min_value_wei, webhook_url)
      VALUES (?, ?, ?, ?, ?, ?)`
-  ).run(id, name, match_type, address.toLowerCase(), min_value_wei ?? null, webhook_url);
+  ).run(id, name, match_type, address.toLowerCase(), min_value_wei ?? null, webhook.url);
 
   const rule = db.prepare("SELECT * FROM rules WHERE id = ?").get(id);
   return c.json({ rule }, 201);
 });
 
-rules.delete("/:id", (c) => {
+rules.delete("/:id", requireWriteAuth, (c) => {
   const id = c.req.param("id");
   db.prepare("DELETE FROM rules WHERE id = ?").run(id);
   db.prepare("DELETE FROM deliveries WHERE rule_id = ?").run(id);
   return c.json({ ok: true });
 });
 
-rules.post("/:id/toggle", (c) => {
+rules.post("/:id/toggle", requireWriteAuth, (c) => {
   const id = c.req.param("id");
   db.prepare("UPDATE rules SET active = 1 - active WHERE id = ?").run(id);
   const rule = db.prepare("SELECT * FROM rules WHERE id = ?").get(id);

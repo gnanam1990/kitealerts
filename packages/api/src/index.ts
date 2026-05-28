@@ -5,7 +5,7 @@ import rules from "./routes/rules";
 import { startWatcher } from "./lib/watcher";
 
 const app = new Hono();
-app.use("*", cors());
+app.use("*", cors({ allowHeaders: ["Content-Type", "Authorization"] }));
 
 app.get("/", (c) =>
   c.json({ ok: true, service: "kitealerts", version: "0.1.0" })

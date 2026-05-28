@@ -33,3 +33,14 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_rules_active ON rules(active);
   CREATE INDEX IF NOT EXISTS idx_deliveries_rule ON deliveries(rule_id);
 `);
+
+function ensureColumn(table: string, column: string, definition: string) {
+  const rows = db.pragma(`table_info(${table})`) as { name: string }[];
+  if (!rows.some((row) => row.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
+  }
+}
+
+ensureColumn("deliveries", "attempts", "attempts INTEGER NOT NULL DEFAULT 0");
+ensureColumn("deliveries", "next_attempt_at", "next_attempt_at INTEGER");
+ensureColumn("deliveries", "last_attempt_at", "last_attempt_at INTEGER");

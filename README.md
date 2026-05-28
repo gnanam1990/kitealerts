@@ -66,7 +66,9 @@ Deliveries are recorded per `(rule_id, tx_hash)` with a `UNIQUE` constraint so t
 - Multiple delivery channels (Discord, Telegram, email)
 - KiteIndex Lite GraphQL subscription (replaces polling)
 - User accounts via KiteAuth
-- Retry queue + exponential backoff (current behavior: one attempt per match)
+- Rule mutation auth via `Authorization: Bearer $KITEALERTS_WRITE_API_KEY` (write routes fail closed when unset)
+- Webhook SSRF guard blocks localhost, private/link-local IPs, cloud metadata hosts, credentialed URLs, and private DNS resolutions
+- Failed webhook deliveries retry with exponential backoff up to `WEBHOOK_MAX_ATTEMPTS`
 
 ## License
 
